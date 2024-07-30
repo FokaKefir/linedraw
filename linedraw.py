@@ -10,6 +10,7 @@ import perlin
 from util import *
 
 no_cv = False
+no_svg = False
 export_path = "output/out.svg"
 draw_contours = True
 draw_hatch = True
@@ -17,6 +18,8 @@ show_bitmap = False
 resolution = 1024
 hatch_size = 16
 contour_simplify = 2
+
+color_type = "black"
 
 try:
     import numpy as np
@@ -181,37 +184,90 @@ def sketch(path):
             pass
     w,h = IM.size
 
-    IM = IM.convert("L")
-    IM=ImageOps.autocontrast(IM,10)
+    if color_type == 'black':
+        IM = IM.convert("L")
+        IM = ImageOps.autocontrast(IM,10)
 
-    lines = []
-    if draw_contours:
-        lines += getcontours(IM.resize((resolution//contour_simplify,resolution//contour_simplify*h//w)),contour_simplify)
-    if draw_hatch:
-        lines += hatch(IM.resize((resolution//hatch_size,resolution//hatch_size*h//w)),hatch_size)
+        lines = []
+        if draw_contours:
+            lines += getcontours(IM.resize((resolution//contour_simplify,resolution//contour_simplify*h//w)),contour_simplify)
+        if draw_hatch:
+            lines += hatch(IM.resize((resolution//hatch_size,resolution//hatch_size*h//w)),hatch_size)
 
-    lines = sortlines(lines)
+        lines = sortlines(lines)
+    elif color_type == 'rgb':
+        im_l = IM.convert("L")
+        im_r, im_g, im_b = IM.split()
+
+        im_l = ImageOps.autocontrast(im_l,10)
+        im_r = ImageOps.autocontrast(im_r,10)
+        im_g = ImageOps.autocontrast(im_g,10)
+        im_b = ImageOps.autocontrast(im_b,10)
+
+        im_channels = [(im_l, "black"), (im_r, "red"), (im_g, "green"), (im_b, "blue")]
+
+        lines_dict = {}
+        for im, color in im_channels:
+            print(f'color: {color}')
+
+            lines = []
+            if draw_contours:
+                lines += getcontours(im.resize((resolution//contour_simplify,resolution//contour_simplify*h//w)),contour_simplify)
+            if draw_hatch:
+                lines += hatch(im.resize((resolution//hatch_size,resolution//hatch_size*h//w)),hatch_size)
+
+            lines = sortlines(lines)
+
+            lines_dict[color] = lines
+
+        lines = lines_dict
+
+
     if show_bitmap:
-        disp = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
-        draw = ImageDraw.Draw(disp)
-        for l in lines:
-            draw.line(l,(0,0,0),5)
-        disp.show()
+        display_bitmap(lines, h, w)
 
-    f = open(export_path,'w')
-    f.write(makesvg(lines))
-    f.close()
+    if not no_svg:
+        f = open(export_path,'w')
+        f.write(makesvg(lines))
+        f.close()
+        
     print(len(lines),"strokes.")
     print("done.")
     return lines
 
+def display_bitmap(lines, h, w):
+    disp = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
+    draw = ImageDraw.Draw(disp)
+    if (type(lines) == dict):
+        for color in lines:
+            for l in lines[color]:
+                if color == 'black':
+                    draw.line(l,(0,0,0),5)
+                elif color == 'red':
+                    draw.line(l,(255,0,0),5)
+                elif color == 'green':
+                    draw.line(l,(0,255,0),5)
+                elif color == 'blue':
+                    draw.line(l,(0,0,255),5)
+    else:
+        for l in lines:
+            draw.line(l,(0,0,0),5)
+    disp.show()
 
 def makesvg(lines):
     print("generating svg file...")
     out = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">'
-    for l in lines:
-        l = ",".join([str(p[0]*0.5)+","+str(p[1]*0.5) for p in l])
-        out += '<polyline points="'+l+'" stroke="black" stroke-width="2" fill="none" />\n'
+    if (type(lines) == dict):
+        for color in lines:
+            for l in lines[color]:
+                l = ",".join([str(p[0]*0.5)+","+str(p[1]*0.5) for p in l])
+                out += '<polyline points="'+l+f'" stroke="{color}" stroke-width="2" fill="none" />\n'
+        
+    else:
+        for l in lines:
+            l = ",".join([str(p[0]*0.5)+","+str(p[1]*0.5) for p in l])
+            out += '<polyline points="'+l+'" stroke="black" stroke-width="2" fill="none" />\n'
+    
     out += '</svg>'
     return out
 
@@ -226,6 +282,11 @@ if __name__ == "__main__":
     parser.add_argument('-o','--output',dest='output_path',
         default=export_path,action='store',nargs='?',type=str,
         help='Output path.')
+    
+    parser.add_argument('-c', '--color', dest='color_type',
+        default=color_type, action='store', type=str,
+        choices=['black', 'rgb'],
+        help='Color channels which is used')
 
     parser.add_argument('-b','--show_bitmap',dest='show_bitmap',
         const = not show_bitmap,default= show_bitmap,action='store_const',
@@ -242,6 +303,10 @@ if __name__ == "__main__":
     parser.add_argument('--no_cv',dest='no_cv',
         const = not no_cv,default= no_cv,action='store_const',
         help="Don't use openCV.")
+    
+    parser.add_argument('--no_svg', dest='no_svg', 
+                        const=not no_svg, default=no_svg, action='store_const',
+                        help="Don't export to SVG.")
 
 
     parser.add_argument('--hatch_size',dest='hatch_size',
@@ -260,4 +325,6 @@ if __name__ == "__main__":
     contour_simplify = args.contour_simplify
     show_bitmap = args.show_bitmap
     no_cv = args.no_cv
+    no_svg = args.no_svg
+    color_type = args.color_type
     sketch(args.input_path)
