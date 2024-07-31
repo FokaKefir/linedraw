@@ -7,7 +7,7 @@ def create_dir_if_not_exists(path):
 
 if __name__ == "__main__":
 
-    img_name = "sapi1"
+    img_name = "dl1"
     img_format = ".jpeg"
 
     create_dir_if_not_exists("./output/")
