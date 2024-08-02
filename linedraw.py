@@ -247,7 +247,7 @@ def sketch(path):
         display_bitmap(lines, h, w)
 
     if not no_svg:
-        save_svg
+        save_svg(lines, export_path)
         
     print(len(lines),"strokes.")
     print("done.")

@@ -16,9 +16,9 @@ def turtle_visualize(lines):
     turtle.mainloop()
 
 
-def display_bitmap(lines, resolution, h, w):
-    disp = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
-    draw = ImageDraw.Draw(disp)
+def lines_to_image(lines, resolution, h, w):
+    img = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
+    draw = ImageDraw.Draw(img)
     if (type(lines) == dict):
         for color in lines:
             for l in lines[color]:
@@ -39,6 +39,11 @@ def display_bitmap(lines, resolution, h, w):
     else:
         for l in lines:
             draw.line(l,(0,0,0),5)
+
+    return img
+
+def display_bitmap(lines, resolution, h, w):
+    disp = lines_to_image(lines, resolution, h, w)
     disp.show()
 
 def save_svg(lines, export_path):
