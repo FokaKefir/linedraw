@@ -4,10 +4,12 @@ import argparse
 
 from PIL import Image, ImageDraw, ImageOps
 
-from filters import *
-from strokesort import *
-import perlin
-from util import *
+from tools.filters import *
+from tools.strokesort import *
+import tools.perlin as perlin
+from tools.util import *
+from tools.visualize import *
+from tools.colorchannels import image_to_cmyk_parts
 
 no_cv = False
 no_svg = False
@@ -18,6 +20,7 @@ show_bitmap = False
 resolution = 1024
 hatch_size = 16
 contour_simplify = 2
+contrast = 10
 
 color_type = "black"
 
@@ -186,7 +189,7 @@ def sketch(path):
 
     if color_type == 'black':
         IM = IM.convert("L")
-        IM = ImageOps.autocontrast(IM,10)
+        IM = ImageOps.autocontrast(IM, contrast)
 
         lines = []
         if draw_contours:
@@ -195,19 +198,18 @@ def sketch(path):
             lines += hatch(IM.resize((resolution//hatch_size,resolution//hatch_size*h//w)),hatch_size)
 
         lines = sortlines(lines)
+        
     elif color_type == 'rgb':
         im_l = IM.convert("L")
         im_r, im_g, im_b = IM.split()
 
-        im_l = ImageOps.autocontrast(im_l,10)
-        im_r = ImageOps.autocontrast(im_r,10)
-        im_g = ImageOps.autocontrast(im_g,10)
-        im_b = ImageOps.autocontrast(im_b,10)
-
-        im_channels = [(im_l, "black"), (im_r, "red"), (im_g, "green"), (im_b, "blue")]
+        im_l = ImageOps.autocontrast(im_l, contrast)
+        im_r = ImageOps.autocontrast(im_r, contrast)
+        im_g = ImageOps.autocontrast(im_g, contrast)
+        im_b = ImageOps.autocontrast(im_b, contrast)
 
         lines_dict = {}
-        for im, color in im_channels:
+        for im, color in [(im_l, "black"), (im_r, "red"), (im_g, "green"), (im_b, "blue")]:
             print(f'color: {color}')
 
             lines = []
@@ -221,56 +223,35 @@ def sketch(path):
             lines_dict[color] = lines
 
         lines = lines_dict
+    
+    elif color_type == 'cmyk':
+        im_c, im_m, im_y, im_k = image_to_cmyk_parts(IM)
+        im_c, im_m, im_y, im_k = [ImageOps.autocontrast(im, contrast) for im in (im_c, im_m, im_y, im_k)]
 
+        lines_dict = {}
+        for im, color in [(im_c, "cyan"), (im_m, "magenta"), (im_y, "yellow")]:
+            print(f'color: {color}')
+
+            lines = hatch(im.resize((resolution//hatch_size,resolution//hatch_size*h//w)),hatch_size)
+            lines = sortlines(lines)
+            lines_dict[color] = lines
+        
+        print('color: black')
+        lines = getcontours(im_k.resize((resolution//contour_simplify,resolution//contour_simplify*h//w)),contour_simplify)
+        lines = sortlines(lines)
+        lines_dict['black'] = lines
+
+        lines = lines_dict
 
     if show_bitmap:
         display_bitmap(lines, h, w)
 
     if not no_svg:
-        f = open(export_path,'w')
-        f.write(makesvg(lines))
-        f.close()
+        save_svg
         
     print(len(lines),"strokes.")
     print("done.")
     return lines
-
-def display_bitmap(lines, h, w):
-    disp = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
-    draw = ImageDraw.Draw(disp)
-    if (type(lines) == dict):
-        for color in lines:
-            for l in lines[color]:
-                if color == 'black':
-                    draw.line(l,(0,0,0),5)
-                elif color == 'red':
-                    draw.line(l,(255,0,0),5)
-                elif color == 'green':
-                    draw.line(l,(0,255,0),5)
-                elif color == 'blue':
-                    draw.line(l,(0,0,255),5)
-    else:
-        for l in lines:
-            draw.line(l,(0,0,0),5)
-    disp.show()
-
-def makesvg(lines):
-    print("generating svg file...")
-    out = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">'
-    if (type(lines) == dict):
-        for color in lines:
-            for l in lines[color]:
-                l = ",".join([str(p[0]*0.5)+","+str(p[1]*0.5) for p in l])
-                out += '<polyline points="'+l+f'" stroke="{color}" stroke-width="2" fill="none" />\n'
-        
-    else:
-        for l in lines:
-            l = ",".join([str(p[0]*0.5)+","+str(p[1]*0.5) for p in l])
-            out += '<polyline points="'+l+'" stroke="black" stroke-width="2" fill="none" />\n'
-    
-    out += '</svg>'
-    return out
-
 
 
 if __name__ == "__main__":
