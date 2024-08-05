@@ -13,6 +13,7 @@ from tools.colorchannels import image_to_cmyk_parts
 
 no_cv = False
 no_svg = False
+save_json = False
 export_path = "output/out.svg"
 draw_contours = True
 draw_hatch = True
@@ -177,15 +178,21 @@ def hatch(IM,sc=16):
 def sketch(path):
     IM = None
     possible = [path,"images/"+path,"images/"+path+".jpg","images/"+path+".png","images/"+path+".tif"]
+    path_to_img = None
     for p in possible:
         try:
             IM = Image.open(p)
+            path_to_img = p
             break
         except FileNotFoundError:
             print("The Input File wasn't found. Check Path")
             exit(0)
             pass
     w,h = IM.size
+
+    if h > w:
+        IM = IM.rotate(90, expand=True)
+        w, h = h, w
 
     if color_type == 'black':
         IM = IM.convert("L")
@@ -248,8 +255,18 @@ def sketch(path):
 
     if not no_svg:
         save_svg(lines, export_path)
-        
-    print(len(lines),"strokes.")
+
+    if save_json:
+        save_to_json(lines, contour_simplify, hatch_size, path_to_img)
+
+    if (type(lines) == list): 
+        print(len(lines),"strokes.")
+    elif (type(lines) == dict):
+        sum_lines = 0
+        for color in lines:
+            print(f'{color}: {len(lines[color])} strokes.')
+            sum_lines += len(lines[color])
+        print(sum_lines, "strokes.")
     print("done.")
     return lines
 
