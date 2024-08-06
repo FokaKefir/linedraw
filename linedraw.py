@@ -171,7 +171,14 @@ def hatch(IM,sc=16):
 
     for i in range(0,len(lines)):
         for j in range(0,len(lines[i])):
-            lines[i][j] = int(lines[i][j][0]+sc*perlin.noise(i*0.5,j*0.1,1)),int(lines[i][j][1]+sc*perlin.noise(i*0.5,j*0.1,2))-j
+            x, y = lines[i][j]
+            x = int(x + sc * perlin.noise(i * 0.5, j * 0.1, 1))
+            y = int(y + sc * perlin.noise(i * 0.5, j * 0.1, 2)) - j
+            
+            x = max(0, min(w * sc - 1, x))
+            y = max(0, min(h * sc - 1, y))
+            lines[i][j] = (x, y)
+
     return lines
 
 
