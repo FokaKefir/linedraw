@@ -19,30 +19,40 @@ def turtle_visualize(lines):
 
 
 def lines_to_image(lines, resolution, h, w):
+    line_width = 4
     img = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
     draw = ImageDraw.Draw(img)
     if (type(lines) == dict):
         for color in lines:
             for l in lines[color]:
                 if color == 'black':
-                    draw.line(l, (0, 0, 0), 5)
+                    draw.line(l, (0, 0, 0), line_width)
                 elif color == 'red':
-                    draw.line(l, (255, 0, 0), 5)
+                    draw.line(l, (255, 0, 0), line_width)
                 elif color == 'green':
-                    draw.line(l, (0, 255, 0), 5)
+                    draw.line(l, (0, 255, 0), line_width)
                 elif color == 'blue':
-                    draw.line(l, (0, 0, 255), 5)
+                    draw.line(l, (0, 0, 255), line_width)
                 elif color == 'cyan':
-                    draw.line(l, (0, 255, 255), 5)
+                    draw.line(l, (0, 255, 255), line_width)
                 elif color == 'magenta':
-                    draw.line(l, (255, 0, 255), 5)
+                    draw.line(l, (255, 0, 255), line_width)
                 elif color == 'yellow':
-                    draw.line(l, (255, 255, 0), 5)
+                    draw.line(l, (255, 255, 0), line_width)
     else:
         for l in lines:
-            draw.line(l,(0,0,0),5)
+            draw.line(l,(0,0,0),line_width)
 
     return img
+
+def save_to_bitmap(lines, resolution, h, w, contour_simplify, hatch_size, path):
+    if not os.path.exists('./bitmap/'):
+        os.mkdir('bitmap')
+
+    file_name, _ = os.path.splitext(os.path.basename(path))
+
+    img = lines_to_image(lines, resolution, h, w)
+    img.save(f'bitmap/{file_name}_cs{contour_simplify}_hs{hatch_size}.jpg')
 
 def display_bitmap(lines, resolution, h, w):
     disp = lines_to_image(lines, resolution, h, w)

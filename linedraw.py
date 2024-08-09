@@ -14,6 +14,7 @@ from tools.colorchannels import image_to_cmyk_parts
 no_cv = False
 no_svg = False
 save_json = False
+save_bitmap = False
 export_path = "output/out.svg"
 draw_contours = True
 draw_hatch = True
@@ -258,13 +259,16 @@ def sketch(path):
         lines = lines_dict
 
     if show_bitmap:
-        display_bitmap(lines, h, w)
+        display_bitmap(lines, resolution, h, w)
 
     if not no_svg:
         save_svg(lines, export_path)
 
     if save_json:
         save_to_json(lines, contour_simplify, hatch_size, path_to_img)
+
+    if save_bitmap:
+        save_to_bitmap(lines, resolution, h, w, contour_simplify, hatch_size, path)
 
     if (type(lines) == list): 
         print(len(lines),"strokes.")
