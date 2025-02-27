@@ -265,7 +265,7 @@ def sketch(path):
         save_svg(lines, export_path)
 
     if save_json:
-        save_to_json(lines, contour_simplify, hatch_size, path_to_img)
+        save_to_json(lines, contour_simplify, hatch_size, path_to_img, h=resolution, w=resolution*h//w)
 
     if save_bitmap:
         save_to_bitmap(lines, resolution, h, w, contour_simplify, hatch_size, path)

@@ -80,7 +80,7 @@ def makesvg(lines):
     out += '</svg>'
     return out
 
-def save_to_json(lines, contour_simplify, hatch_size, path):
+def save_to_json(lines, contour_simplify, hatch_size, path, h, w):
     if not os.path.exists('./json/'):
         os.mkdir('json')
     
@@ -89,5 +89,11 @@ def save_to_json(lines, contour_simplify, hatch_size, path):
     if (type(lines) == list):
         lines = {'black': lines}
 
+    json_data = {
+        'width': w,
+        'height': h,
+        'lines': lines
+    }
+
     with open(f'json/{file_name}_cs{contour_simplify}_hs{hatch_size}.json', 'w') as fout:
-        json.dump(lines, fout) 
+        json.dump(json_data, fout) 
