@@ -1,5 +1,6 @@
 # venv
 ld/
+.venv
 
 
 # Byte-compiled / optimized / DLL files
