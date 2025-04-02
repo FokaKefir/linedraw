@@ -198,9 +198,9 @@ def sketch(path):
             pass
     w,h = IM.size
 
-    if h > w:
-        IM = IM.rotate(90, expand=True)
-        w, h = h, w
+    # if h > w:
+    #     IM = IM.rotate(90, expand=True)
+    #     w, h = h, w
 
     if color_type == 'black':
         IM = IM.convert("L")
