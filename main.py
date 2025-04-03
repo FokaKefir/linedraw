@@ -2,8 +2,8 @@ import linedraw
 
 
 if  __name__ == '__main__':
-    img_name = 'tesla1'
-    img_format = '.jpg'
+    img_name = 'marilyn'
+    img_format = '.png'
 
     draw_contours = True
     contour_simplify = 3
