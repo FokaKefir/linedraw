@@ -19,7 +19,7 @@ def turtle_visualize(lines):
 
 
 def lines_to_image(lines, resolution, h, w):
-    line_width = 4
+    line_width = 10
     img = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
     draw = ImageDraw.Draw(img)
     if (type(lines) == dict):

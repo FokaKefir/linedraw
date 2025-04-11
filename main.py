@@ -2,7 +2,7 @@ import linedraw
 
 
 if  __name__ == '__main__':
-    img_name = 'marilyn'
+    img_name = 'tesla_color'
     img_format = '.png'
 
     draw_contours = True
